@@ -1,339 +1,319 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-  TrendingUp,
-  TrendingDown,
-  ShieldAlert,
-  Zap,
-  Activity,
-  DollarSign,
-  Lock,
-  RefreshCw,
+  Sparkles,
   Cpu,
-  BarChart3,
+  Target,
+  ShieldCheck,
+  TrendingUp,
+  AlertOctagon,
+  ArrowRight,
+  Clock,
+  Layers,
   CheckCircle2,
-  AlertTriangle,
+  Lock,
+  Wallet,
+  Zap,
+  DollarSign,
+  Flame,
+  ChevronRight,
+  BarChart2
 } from "lucide-react";
 
-export default function AstraQuantDashboard() {
-  const [selectedAsset, setSelectedAsset] = useState("WIN$N (Mini Índice)");
-  const [currentPrice, setCurrentPrice] = useState(131250);
-  const [vwap, setVwap] = useState(131180);
-  const [rsi, setRsi] = useState(42.5);
-  const [ema9, setEma9] = useState(131220);
-  const [ema21, setEma21] = useState(131150);
-
-  // Metas do dia (R$ 20 a R$ 30)
-  const [dailyTarget, setDailyTarget] = useState(25);
-  const [dailyStopLoss, setDailyStopLoss] = useState(15);
-  const [accumulatedProfit, setAccumulatedProfit] = useState(0);
-  const [isLockedForDay, setIsLockedForDay] = useState(false);
+export default function AstraQuantMaster() {
+  // Inputs Simples para o Usuário
+  const [targetGoal, setTargetGoal] = useState<number>(25);
+  const [bankroll, setBankroll] = useState<number>(300);
+  const [riskTolerance, setRiskTolerance] = useState<string>("MODERADO");
+  const [assetType, setAssetType] = useState<string>("B3 (Mini Índice WIN)");
 
   const [loading, setLoading] = useState(false);
-  const [signal, setSignal] = useState<any>(null);
-  const [executionLog, setExecutionLog] = useState<string[]>([]);
+  const [plan, setPlan] = useState<any>(null);
+  const [metaBatida, setMetaBatida] = useState(false);
 
-  // Simulação de ticker de preços em tempo real
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const variation = Math.floor(Math.random() * 25) - 12;
-      setCurrentPrice((prev) => {
-        const next = prev + variation;
-        return next;
-      });
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  const presets = [
+    { label: "R$ 20 / dia", value: 20, desc: "Conservador • 100 pontos no Mini Índice" },
+    { label: "R$ 25 / dia", value: 25, desc: "Equilibrado • Alvo recomendado da consistência" },
+    { label: "R$ 30 / dia", value: 30, desc: "Avançado • 150 pontos ou 2 scalps rápidos" },
+    { label: "R$ 50 / dia", value: 50, desc: "Profissional • Exige maior paciência de timing" },
+  ];
 
-  const triggerAstraAnalysis = async () => {
-    if (isLockedForDay) return;
+  const handleGeneratePlan = async (val?: number) => {
+    const goalToUse = val !== undefined ? val : targetGoal;
     setLoading(true);
+    setMetaBatida(false);
     try {
-      const res = await fetch("/api/analyze", {
+      const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          asset: selectedAsset,
-          currentPrice,
-          vwap,
-          rsi,
-          ema9,
-          ema21,
-          targetProfit: dailyTarget,
-          stopLoss: dailyStopLoss,
+          targetGoal: goalToUse,
+          bankroll,
+          riskTolerance,
+          assetType,
         }),
       });
-
       const data = await res.json();
-      if (data.success && data.signal) {
-        setSignal(data.signal);
-        setExecutionLog((prev) => [
-          `[${new Date().toLocaleTimeString()}] GPT-6 ASTRA emitiu: ${data.signal.action} @ ${data.signal.entryPrice} (Confiança: ${data.signal.confidence}%)`,
-          ...prev.slice(0, 7),
-        ]);
+      if (data.success && data.plan) {
+        setPlan(data.plan);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  const simulateExecution = (outcome: "WIN" | "LOSS") => {
-    if (outcome === "WIN") {
-      const profit = 25;
-      const nextTotal = accumulatedProfit + profit;
-      setAccumulatedProfit(nextTotal);
-      setExecutionLog((prev) => [
-        `[${new Date().toLocaleTimeString()}] ✅ TAKE PROFIT EXECUTADO: +R$ ${profit},00! Total do dia: R$ ${nextTotal},00`,
-        ...prev,
-      ]);
-      if (nextTotal >= dailyTarget) {
-        setIsLockedForDay(true);
-      }
-    } else {
-      const loss = 15;
-      const nextTotal = accumulatedProfit - loss;
-      setAccumulatedProfit(nextTotal);
-      setExecutionLog((prev) => [
-        `[${new Date().toLocaleTimeString()}] 🛑 STOP LOSS RESPEITADO: -R$ ${loss},00. Total do dia: R$ ${nextTotal},00`,
-        ...prev,
-      ]);
-      if (Math.abs(nextTotal) >= dailyStopLoss && nextTotal < 0) {
-        setIsLockedForDay(true);
-      }
-    }
-    setSignal(null);
-  };
-
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 p-4 md:p-8 flex flex-col items-center">
-      {/* Top Header */}
-      <header className="w-full max-w-6xl flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-slate-800 gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400">
-              <Cpu className="w-6 h-6 animate-pulse" />
+    <div className="min-h-screen bg-[#060911] text-slate-100 flex flex-col items-center">
+      {/* Top Banner IA Status */}
+      <div className="w-full bg-gradient-to-r from-blue-950/60 via-indigo-900/40 to-slate-900 border-b border-blue-500/20 py-2.5 px-4">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between text-xs text-slate-300 gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-              ASTRA QUANT TRADER <span className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-mono border border-blue-500/30">GPT-6 ASTRA MAX</span>
-            </h1>
+            <span className="font-semibold text-white">GPT-6 ASTRA QUANT ENGINE</span>
+            <span className="text-slate-500">•</span>
+            <span className="text-blue-400 font-mono">192.6M Tokens Ativos</span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Motor quantitativo de alta frequência e scalping blindado • Alvo Diário: R$ 20,00 – R$ 30,00
+          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+            <span>Latência média: <strong className="text-emerald-400">1.8s</strong></span>
+            <span>Meta Diária Típica: <strong className="text-white">R$ 20 – R$ 30</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full max-w-6xl px-4 py-8 flex flex-col items-center">
+        {/* Header Principal */}
+        <div className="text-center max-w-2xl mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-3">
+            <Sparkles className="w-3.5 h-3.5" /> INTELIGÊNCIA MÁXIMA DE TRADING
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+            Quanto você quer lucrar <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">hoje</span>?
+          </h1>
+          <p className="text-slate-400 text-sm mt-3 leading-relaxed">
+            Digite o valor exato da sua meta diária. O <strong>GPT-6 Astra</strong> calcula o ativo, o horário exato, os pontos de entrada, o gain e a trava de risco automática.
           </p>
         </div>
 
-        {/* Status de Meta Diária */}
-        <div className="flex items-center gap-4 bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-slate-400">Lucro do Dia</div>
-            <div className={`text-xl font-bold ${accumulatedProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              R$ {accumulatedProfit.toFixed(2)}
-            </div>
-          </div>
-          <div className="h-8 w-px bg-slate-800" />
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-slate-400">Meta do Dia</div>
-            <div className="text-xl font-bold text-white">R$ {dailyTarget.toFixed(2)}</div>
-          </div>
-          {isLockedForDay && (
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 border border-amber-500/40 rounded-lg text-amber-400 text-xs font-semibold">
-              <Lock className="w-3.5 h-3.5" />
-              TRAVA DE DISCIPLINA ATIVADA
-            </div>
-          )}
-        </div>
-      </header>
+        {/* INPUT CARD — DEFINA APENAS O VALOR */}
+        <div className="w-full max-w-3xl bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur shadow-2xl relative overflow-hidden">
+          <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main Grid */}
-      <main className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        {/* Coluna 1 e 2: Gráfico e Indicadores */}
-        <section className="lg:col-span-2 space-y-6">
-          {/* Card de Preço em Tempo Real */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 relative overflow-hidden backdrop-blur">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedAsset}
-                  onChange={(e) => setSelectedAsset(e.target.value)}
-                  className="bg-slate-800 text-white text-sm font-semibold rounded-lg px-3 py-1.5 border border-slate-700 outline-none"
-                >
-                  <option value="WIN$N (Mini Índice)">WIN$N (Mini Índice B3)</option>
-                  <option value="WDO$N (Mini Dólar)">WDO$N (Mini Dólar B3)</option>
-                  <option value="BTC/USDT (Bitcoin)">BTC/USDT (Crypto Scalp)</option>
-                </select>
-                <span className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> MERCADO AO VIVO
-                </span>
-              </div>
-              <div className="text-right">
-                <span className="text-xs text-slate-400">Última Cotação</span>
-                <div className="text-2xl font-mono font-bold text-white tracking-wide">
-                  {currentPrice.toLocaleString("pt-BR")}
-                </div>
-              </div>
-            </div>
-
-            {/* Grid de Indicadores Institucionais */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-              <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                <div className="text-[11px] text-slate-400 font-medium">VWAP Diária</div>
-                <div className="text-sm font-mono font-semibold text-blue-400 mt-1">{vwap}</div>
-                <div className="text-[10px] text-slate-500">Preço Ponderado</div>
-              </div>
-              <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                <div className="text-[11px] text-slate-400 font-medium">IFR / RSI (14)</div>
-                <div className="text-sm font-mono font-semibold text-amber-400 mt-1">{rsi}</div>
-                <div className="text-[10px] text-slate-500">Região Neutra/Scalp</div>
-              </div>
-              <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                <div className="text-[11px] text-slate-400 font-medium">EMA 9 (Rápida)</div>
-                <div className="text-sm font-mono font-semibold text-purple-400 mt-1">{ema9}</div>
-                <div className="text-[10px] text-slate-500">Direção Imediata</div>
-              </div>
-              <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                <div className="text-[11px] text-slate-400 font-medium">EMA 21 (Tendência)</div>
-                <div className="text-sm font-mono font-semibold text-emerald-400 mt-1">{ema21}</div>
-                <div className="text-[10px] text-slate-500">Tendência Primária</div>
-              </div>
-            </div>
-
-            {/* Ação de Disparo da IA */}
-            <div className="mt-6 pt-4 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="text-xs text-slate-400 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-400" />
-                <span>Modelo: <strong>GPT-6 Astra</strong> (192M tokens em buffer)</span>
-              </div>
+          {/* Presets Rápidos */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {presets.map((p) => (
               <button
-                disabled={loading || isLockedForDay}
-                onClick={triggerAstraAnalysis}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-50 transition-all cursor-pointer"
+                key={p.value}
+                onClick={() => {
+                  setTargetGoal(p.value);
+                  handleGeneratePlan(p.value);
+                }}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  targetGoal === p.value
+                    ? "bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/10"
+                    : "bg-slate-950/60 border-slate-800/80 hover:border-slate-700"
+                }`}
+              >
+                <div className={`text-base font-bold ${targetGoal === p.value ? "text-emerald-400" : "text-white"}`}>
+                  {p.label}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-1 leading-tight">{p.desc}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Campo de Valor Customizado */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div className="sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-blue-400" /> Meta de Lucro (R$)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-sm font-bold text-slate-500">R$</span>
+                <input
+                  type="number"
+                  value={targetGoal}
+                  onChange={(e) => setTargetGoal(Number(e.target.value))}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2.5 pl-10 pr-3 text-lg font-bold text-emerald-400 focus:border-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-1">
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <Wallet className="w-3.5 h-3.5 text-purple-400" /> Capital na Corretora (R$)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-3 text-sm font-bold text-slate-500">R$</span>
+                <input
+                  type="number"
+                  value={bankroll}
+                  onChange={(e) => setBankroll(Number(e.target.value))}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl py-2.5 pl-10 pr-3 text-lg font-bold text-white focus:border-blue-500 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="sm:col-span-1">
+              <button
+                disabled={loading}
+                onClick={() => handleGeneratePlan()}
+                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Processando Ordem Quântica...
+                    <Cpu className="w-4 h-4 animate-spin" />
+                    Calculando...
                   </>
                 ) : (
                   <>
                     <Zap className="w-4 h-4" />
-                    DISPARAR ANÁLISE QUANT ASTRA
+                    Gerar Plano Completo
                   </>
                 )}
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Card do Sinal Emitido pela IA */}
-          {signal && (
-            <div className="bg-slate-900/90 border-2 border-blue-500/50 rounded-2xl p-6 shadow-2xl relative">
-              <div className="flex justify-between items-start mb-4">
+        {/* PLANO DE EXECUÇÃO GERADO PELO ASTRA */}
+        {plan && (
+          <div className="w-full max-w-4xl mt-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header do Resultado */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 border border-blue-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
                 <div>
-                  <span className="text-[10px] font-bold tracking-widest text-blue-400 uppercase">SINAL QUANTITATIVO ASTRA</span>
-                  <h3 className="text-xl font-black mt-1 flex items-center gap-2">
-                    {signal.action.includes("COMPRA") && <TrendingUp className="text-emerald-400 w-6 h-6" />}
-                    {signal.action.includes("VENDA") && <TrendingDown className="text-rose-400 w-6 h-6" />}
-                    <span className={signal.action.includes("COMPRA") ? "text-emerald-400" : signal.action.includes("VENDA") ? "text-rose-400" : "text-amber-400"}>
-                      {signal.action}
-                    </span>
-                  </h3>
+                  <span className="text-[10px] font-mono tracking-widest text-blue-400 uppercase font-bold">
+                    PLANO QUANTITATIVO HOMOLOGADO • GPT-6 ASTRA
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white mt-1 flex items-center gap-2">
+                    Objetivo: <span className="text-emerald-400">R$ {plan.targetGoal},00 no bolso</span>
+                  </h2>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-slate-400">Probabilidade Matemática</div>
-                  <div className="text-lg font-bold text-white font-mono">{signal.confidence}%</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-center">
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase">Ponto de Entrada</span>
-                  <div className="text-sm font-bold text-white font-mono mt-1">{signal.entryPrice}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-emerald-400 uppercase font-semibold">Take Profit (+R$ 25)</span>
-                  <div className="text-sm font-bold text-emerald-400 font-mono mt-1">{signal.takeProfitPrice}</div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-rose-400 uppercase font-semibold">Stop Loss (-R$ 15)</span>
-                  <div className="text-sm font-bold text-rose-400 font-mono mt-1">{signal.stopLossPrice}</div>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-300 mt-4 leading-relaxed bg-slate-800/40 p-3 rounded-lg border border-slate-700/50">
-                <strong>Análise do Astra:</strong> {signal.rationale}
-              </p>
-
-              {/* Dica Psicológica */}
-              <div className="mt-3 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg flex items-center gap-2 text-xs text-indigo-300">
-                <ShieldAlert className="w-4 h-4 shrink-0" />
-                <span>{signal.mentalTip}</span>
-              </div>
-
-              {/* Botões de Simulação de Execução */}
-              <div className="mt-4 pt-4 border-t border-slate-800 flex gap-3">
-                <button
-                  onClick={() => simulateExecution("WIN")}
-                  className="flex-1 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition"
-                >
-                  Registrar Take Profit (+R$ 25)
-                </button>
-                <button
-                  onClick={() => simulateExecution("LOSS")}
-                  className="flex-1 py-2.5 rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white font-semibold text-xs transition"
-                >
-                  Registrar Stop Loss (-R$ 15)
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Coluna 3: Disciplina e Regras de R$ 20 a R$ 30 */}
-        <aside className="space-y-6">
-          {/* Card de Regras de Ouro */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-400" />
-              LEIS DA CONSISTÊNCIA (R$ 20-30/DIA)
-            </h2>
-            <ul className="text-xs text-slate-300 space-y-3 mt-4">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>Apenas 1 a 2 operações por dia:</strong> Bateu R$ 20 ou R$ 30? Encerre a tela. O mercado vai tentar tomar o seu lucro de volta.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>Stop Loss Inegociável:</strong> Máximo de R$ 15 por operação. Se tomar o stop, não tente "se vingar" do mercado.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span><strong>R$ 25 x 20 dias úteis = R$ 500,00 extras no mês:</strong> A consistência vem da disciplina, não de grandes tacadas.</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Histórico de Execução */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2 mb-3">
-              <BarChart3 className="w-4 h-4 text-blue-400" />
-              LOG DE EXECUÇÃO QUANT
-            </h2>
-            <div className="space-y-2 max-h-60 overflow-y-auto font-mono text-[11px]">
-              {executionLog.length === 0 ? (
-                <div className="text-slate-500 italic">Nenhuma ordem executada hoje. Dispare a análise do Astra acima.</div>
-              ) : (
-                executionLog.map((log, i) => (
-                  <div key={i} className="p-2 bg-slate-950/80 border border-slate-800 rounded text-slate-300">
-                    {log}
+                <div className="flex items-center gap-3 bg-slate-950/80 border border-slate-800 px-4 py-2 rounded-xl">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <div className="text-xs">
+                    <span className="text-slate-400 block text-[10px]">Melhor Janela de Horário</span>
+                    <strong className="text-white">{plan.bestTradingWindow}</strong>
                   </div>
-                ))
-              )}
+                </div>
+              </div>
+
+              {/* Grid de 3 Pilares: Entrada, Alvo e Stop */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                {/* Entrada */}
+                <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-400">1. Ponto de Entrada</span>
+                    <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded font-mono font-bold">
+                      {plan.recommendedAsset}
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black font-mono text-white mt-2">
+                    {plan.entry?.price}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 leading-relaxed">
+                    {plan.entry?.condition}
+                  </div>
+                </div>
+
+                {/* Take Profit (Ganho da Meta) */}
+                <div className="bg-emerald-950/20 border border-emerald-500/40 p-4 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-emerald-400">2. Take Profit (Alvo)</span>
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">
+                      +R$ {plan.takeProfit?.expectedProfitBRL},00
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black font-mono text-emerald-400 mt-2">
+                    {plan.takeProfit?.price}
+                  </div>
+                  <div className="text-xs text-emerald-300/80 mt-1">
+                    {plan.takeProfit?.pointsOrPercent}
+                  </div>
+                </div>
+
+                {/* Stop Loss (Risco Máximo) */}
+                <div className="bg-rose-950/20 border border-rose-500/40 p-4 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-rose-400">3. Stop Loss Blindado</span>
+                    <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-bold">
+                      -R$ {plan.stopLoss?.maxRiskBRL},00
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black font-mono text-rose-400 mt-2">
+                    {plan.stopLoss?.price}
+                  </div>
+                  <div className="text-xs text-rose-300/80 mt-1">
+                    {plan.stopLoss?.pointsOrPercent}
+                  </div>
+                </div>
+              </div>
+
+              {/* Relação Risco Retorno & Estratégia */}
+              <div className="mt-6 bg-slate-950/60 border border-slate-800/80 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div className="text-xs text-slate-300">
+                  <strong className="text-white block mb-0.5">Estratégia Quantitativa:</strong>
+                  {plan.exactStrategy}
+                </div>
+                <div className="shrink-0 bg-blue-500/10 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-blue-300">
+                  Risco/Retorno: {plan.riskRewardRatio}
+                </div>
+              </div>
+
+              {/* Passo a Passo de Execução Simples */}
+              <div className="mt-6">
+                <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Passo a Passo Para Executar Agora na Sua Corretora:
+                </h3>
+                <div className="space-y-2">
+                  {plan.stepByStepExecution?.map((step: string, idx: number) => (
+                    <div key={idx} className="flex items-start gap-3 bg-slate-950/80 border border-slate-800/60 p-3 rounded-lg text-xs text-slate-300">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600/30 text-blue-400 font-bold text-[10px]">
+                        {idx + 1}
+                      </span>
+                      <span>{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Regra de Preservação e Disciplina */}
+              <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3 text-xs text-amber-200/90 leading-relaxed">
+                <AlertOctagon className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-amber-300 block mb-0.5">TRAVA DE SEGURANÇA MENTAL:</strong>
+                  {plan.antiLossProtectionRule}
+                </div>
+              </div>
+
+              {/* Botão de Conclusão / Meta Batida */}
+              <div className="mt-6 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-slate-400">
+                  Executou a operação e atingiu o alvo?
+                </div>
+                <button
+                  onClick={() => setMetaBatida(true)}
+                  className={`px-6 py-3 rounded-xl font-bold text-xs flex items-center gap-2 transition cursor-pointer ${
+                    metaBatida
+                      ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30"
+                      : "bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40"
+                  }`}
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  {metaBatida ? "META DO DIA BATIDA (+R$ " + plan.targetGoal + ")! DESLIGUE A TELA" : "REGISTRAR META BATIDA HOJE"}
+                </button>
+              </div>
             </div>
           </div>
-        </aside>
-      </main>
+        )}
+      </div>
     </div>
   );
 }
